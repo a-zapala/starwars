@@ -2,6 +2,7 @@
 #define STARWARS_REBELFLEET_H
 
 #include <cassert>
+#include <type_traits>
 
 namespace {
     constexpr int minSpeedExplorerAndXwing = 299796;
@@ -18,7 +19,7 @@ private:
     const U attackPower;
 
 public:
-    using value_type = U;
+    using valueType = U;
     
     template<bool A = canAttack, typename = typename std::enable_if<A>::type>
     RebelStarship(U shield, const U speed, const U attackPower) : shield(shield), speed(speed),
@@ -42,7 +43,7 @@ public:
     }
     
     void takeDamage(U damage) {
-        if (shield < damage) {
+        if (shield > damage) {
             shield -= damage;
         }
         else {
