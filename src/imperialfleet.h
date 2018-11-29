@@ -3,15 +3,7 @@
 
 #include "rebelfleet.h"
 
-namespace {
-    enum ShipType {
-        DEATH_STAR = 0,
-        IMPERIAL_DESTROYER = 1,
-        TIE_FIGHTER = 2
-    };
-}
-
-template <typename U, ShipType T>
+template <typename U>
 class ImperialStarship {
 public:
     using valueType = U;
@@ -38,9 +30,9 @@ private:
     const U attackPower;
 };
 
-template <typename U> using DeathStar = ImperialStarship<U, DEATH_STAR>;
-template <typename U> using ImperialDestroyer = ImperialStarship<U, IMPERIAL_DESTROYER>;
-template <typename U> using TIEFighter = ImperialStarship<U, TIE_FIGHTER>;
+template <typename U> using DeathStar = ImperialStarship<U>;
+template <typename U> using ImperialDestroyer = ImperialStarship<U>;
+template <typename U> using TIEFighter = ImperialStarship<U>;
 
 
 template <typename I, typename R> void attack(I& imperialShip, R& rebelShip) {
