@@ -1,7 +1,8 @@
 #include "rebelfleet.h"
 #include "imperialfleet.h"
-//#include "battle.h"
+#include "battle.h"
 #include <cassert>
+#include <type_traits>
 
 int main() {
     XWing<float> xwing(100.0f, 300000.0f, 50.0f);
@@ -24,17 +25,18 @@ int main() {
     assert(destroyer.getShield() == 139);
     assert(cruiser.getShield() == 1214);
 
-//    auto battle = SpaceBattle<short, 1, 23,
-//                              DeathStar<long>,
-//                              Explorer<int>,
-//                              TIEFighter<unsigned>,
-//                              XWing<float>>(deathStar,
-//                                            explorer,
-//                                            fighter,
-//                                            xwing);
-//
-//    assert(battle.countRebelFleet() == 2);
-//    assert(battle.countImperialFleet() == 2);
+
+    auto battle = SpaceBattle<short, 1, 23,
+                              DeathStar<long>,
+                              Explorer<int>,
+                              TIEFighter<unsigned>,
+                              XWing<float>>(deathStar,
+                                            explorer,
+                                            fighter,
+                                            xwing);
+
+    assert(battle.countRebelFleet() == 2);
+    assert(battle.countImperialFleet() == 2);
 //
 //    battle.tick(2);
 //    assert(battle.countRebelFleet() == 2);
