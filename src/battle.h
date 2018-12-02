@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <tuple>
+#include <array>
 
 #include "rebelfleet.h"
 #include "imperialfleet.h"
@@ -10,7 +11,6 @@
 template<typename T, T t0, T t1, typename... S>
 class SpaceBattle {
 public:
-    
     SpaceBattle(S... ships) : ships(std::make_tuple(ships...)), currentTime(t0) {
         static_assert(t0 < t1, "Too big start time.");
         static_assert(t0 >= 0, "Start time lower than 0.");
@@ -19,44 +19,6 @@ public:
         imperialFleetCount = 0;
         rebelFleetCount = 0;
         countTypeFleet(ships...);
-        
-//        !!!!!!!!!!!!!!!!!!! Nie działa, bo do tuple jest dostęp tylko ze stałymi indeksami. !!!!!!!!!!!!!!!!!!!!!!!!
-//        !!!!!!!!!!!!!!!!! Ale dobrze sprawdza, czy statek jest statkiem rebelii, czy imperium. !!!!!!!!!!!!!!!!!!!!!
-//        for (size_t i = 0; i < shipsCount; i++) {
-//            if (isRebelStarship(std::get<i>(this->ships))) {
-//                rebelFleetCount++;
-//            } else if (isImperialStarship(std::get<i>(this->ships))) {
-//                imperialFleetCount++;
-//            }
-//        }
-
-//        !!!!!!!!!!!!!!!!!!!!!!!! Takie coś działa !!!!!!!!!!!!!!!!!!!!!!!
-//        if (isRebelStarship(std::get<2>(this->ships))) {
-//            rebelFleetCount++;
-//        } else if (isImperialStarship(std::get<2>(this->ships))) {
-//            imperialFleetCount++;
-//        }
-    }
-    
-    template<typename A>
-    void countTypeFleet(A value) {
-        if (isRebelStarship(value)) {
-            rebelFleetCount++;
-        }
-        else if (isImperialStarship(value)) {
-            imperialFleetCount++;
-        }
-    }
-    
-    template<typename A, typename... Args>
-    void countTypeFleet(A first, Args... args) {
-        if (isRebelStarship(first)) {
-            rebelFleetCount++;
-        }
-        else if (isImperialStarship(first)) {
-            imperialFleetCount++;
-        }
-        countTypeFleet(args...);
     }
     
     size_t countImperialFleet() {
@@ -70,7 +32,7 @@ public:
     void tick(T timeStep) {
     
     }
-
+    
 private:
     std::tuple<S...> ships;
     static constexpr size_t shipsCount = sizeof...(S);
@@ -104,6 +66,45 @@ private:
     bool isImperialStarship(U) {
         return isImperialStarshipS<U>::value;
     }
+    
+    template<typename A>
+    void countTypeFleet(A value) {
+        if (isRebelStarship(value)) {
+            rebelFleetCount++;
+        }
+        else if (isImperialStarship(value)) {
+            imperialFleetCount++;
+        }
+    }
+    
+    template<typename A, typename... Args>
+    void countTypeFleet(A first, Args... args) {
+        if (isRebelStarship(first)) {
+            rebelFleetCount++;
+        }
+        else if (isImperialStarship(first)) {
+            imperialFleetCount++;
+        }
+        countTypeFleet(args...);
+    }
+    
+    template <T limit>
+    constexpr static T countLenSq() {
+        T len{};
+        for(len = 0; len * len  < limit; ++len);
+        return len;
+    }
+    
+    template <T limit>
+    constexpr static auto genSquares() {
+        ::std::array<T,lenSquares> result{};
+        for( T i = 0; i * i < limit ; ++i)
+            result[i] = i*i;
+        return result;
+    }
+    
+    constexpr static T lenSquares = countLenSq<t1>();
+    constexpr static auto squares = genSquares<t1>();
 };
 
 #endif //STARWARS_BATTLE_H
