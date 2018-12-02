@@ -15,32 +15,32 @@ public:
         static_assert(t0 < t1, "Too big start time.");
         static_assert(t0 >= 0, "Start time lower than 0.");
         static_assert(t1 >= 0, "Max time lower than 0.");
-        
+
+
+
         imperialFleetCount = 0;
         rebelFleetCount = 0;
         countTypeFleet(ships...);
     }
-    
+
     size_t countImperialFleet() {
         return imperialFleetCount;
     }
-    
+
     size_t countRebelFleet() {
         return rebelFleetCount;
     }
-    
+
     void tick(T timeStep) {
-    
         for (T i = 0; i < timeStep; ++i) {
             if(squares[nextAttackIndex] == currentTime) {
                 countNextTimeIndex();
-                //atack
+                attackSequence(std::index_sequence_for<S...>());
             }
             currentTime++;
         }
-        
     }
-    
+
 private:
     std::tuple<S...> ships;
     static constexpr size_t shipsCount = sizeof...(S);
@@ -49,33 +49,33 @@ private:
     static constexpr T maxTime = t1;
     size_t imperialFleetCount;
     size_t rebelFleetCount;
-    
+
     template<typename U>
     struct isRebelStarshipS : std::false_type {
     };
-    
+
     template<typename U, int minSpeed, int maxSpeed, bool canAttack>
     struct isRebelStarshipS<RebelStarship<U, minSpeed, maxSpeed, canAttack>> : std::true_type {
     };
-    
+
     template<typename U>
     struct isImperialStarshipS : std::false_type {
     };
-    
+
     template<typename U>
     struct isImperialStarshipS<ImperialStarship<U>> : std::true_type {
     };
-    
+
     template<typename U>
     bool isRebelStarship(U) {
         return isRebelStarshipS<U>::value;
     }
-    
+
     template<typename U>
     bool isImperialStarship(U) {
         return isImperialStarshipS<U>::value;
     }
-    
+
     template<typename A>
     void countTypeFleet(A value) {
         if (isRebelStarship(value)) {
@@ -85,7 +85,7 @@ private:
             imperialFleetCount++;
         }
     }
-    
+
     template<typename A, typename... Args>
     void countTypeFleet(A first, Args... args) {
         if (isRebelStarship(first)) {
@@ -96,14 +96,14 @@ private:
         }
         countTypeFleet(args...);
     }
-    
+
     template <T limit>
     constexpr static T countLenSq() {
         T len{};
         for(len = 0; len * len  < limit; ++len);
         return len;
     }
-    
+
     template <T limit>
     constexpr static auto genSquares() {
         ::std::array<T,lenSquares> result{};
@@ -111,10 +111,10 @@ private:
             result[i] = i*i;
         return result;
     }
-    
+
     constexpr static T lenSquares = countLenSq<maxTime>();
     constexpr static auto squares = genSquares<maxTime>();
-    
+
     constexpr static  T firstTimeIndexAtack() {
         for( T i = 0; i < lenSquares ; ++i) {
             if (squares[i] >= t0)
@@ -122,11 +122,74 @@ private:
         }
         return 0;
     }
-    
+
     void countNextTimeIndex() {
         nextAttackIndex = (++nextAttackIndex) % lenSquares;
     }
-    
+
+
+
+    template<typename U, int minSpeed, int maxSpeed, bool canAttack>
+    void attackSequenceImperial(RebelStarship<U, minSpeed, maxSpeed, canAttack>&) {}
+
+    template <typename U>
+    void attackSequenceImperial(ImperialStarship<U>& first) {
+        if (first.getShield() > 0) attackSequenceR(first, std::index_sequence_for<S...>());
+    }
+
+    template <typename U, int minSpeed, int maxSpeed, bool canAttack, typename... Args>
+    void attackSequenceImperial(RebelStarship<U, minSpeed, maxSpeed, canAttack>&, Args&... base) {
+        attackSequenceImperial(base...);
+    }
+
+    template <typename U, typename... Args>
+    void attackSequenceImperial(ImperialStarship<U>& first, Args&... base) {
+        if (first.getShield() > 0) {
+            attackSequenceR(first, std::index_sequence_for<S...>());
+        }
+        attackSequenceImperial(base...);
+    }
+
+    template <typename I, typename U>
+    void attackSequenceRebel(ImperialStarship<I>&, ImperialStarship<U>&) {}
+
+    template <typename I, typename U, int minSpeed, int maxSpeed, bool canAttack>
+    void attackSequenceRebel(ImperialStarship<I>& imperialShip, RebelStarship<U, minSpeed, maxSpeed, canAttack>& first) {
+        if (imperialShip.getShield() > 0 && first.getShield() > 0) {
+            attack(imperialShip, first);
+            if (imperialShip.getShield() == 0) imperialFleetCount--;
+            if (first.getShield() == 0) rebelFleetCount--;
+        }
+    }
+
+    template <typename I, typename U, typename... Args>
+    void attackSequenceRebel(ImperialStarship<I>& imperialShip, ImperialStarship<U>&, Args&... base) {
+        if (imperialShip.getShield() == 0) return;
+        attackSequenceRebel(imperialShip, base...);
+    }
+
+    template <typename I, typename U, int minSpeed, int maxSpeed, bool canAttack, typename... Args>
+    void attackSequenceRebel(ImperialStarship<I>& imperialShip,
+            RebelStarship<U, minSpeed, maxSpeed, canAttack>& first, Args&... base) {
+        if (imperialShip.getShield() == 0) return;
+        if (first.getShield() > 0) {
+            attack(imperialShip, first);
+            if (imperialShip.getShield() == 0) imperialFleetCount--;
+            if (first.getShield() == 0) rebelFleetCount--;
+        }
+        attackSequenceRebel(imperialShip, base...);
+    }
+
+    template <size_t... Is>
+    void attackSequence(std::index_sequence<Is...>) {
+        attackSequenceImperial(std::get<Is>(ships)...);
+    }
+
+    template <typename U, size_t... Is>
+    void attackSequenceR(ImperialStarship<U>& imperialShip, std::index_sequence<Is...>) {
+        attackSequenceRebel(imperialShip, std::get<Is>(ships)...);
+    }
+
 };
 
 #endif //STARWARS_BATTLE_H
