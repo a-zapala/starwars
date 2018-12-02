@@ -1,4 +1,4 @@
-#include "rebelfleet.h"
+#include "../src/rebelfleet.h"
 #include "imperialfleet.h"
 #include "battle.h"
 #include <cassert>
