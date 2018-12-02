@@ -11,7 +11,7 @@
 template<typename T, T t0, T t1, typename... S>
 class SpaceBattle {
 public:
-    SpaceBattle(S... ships) : ships(std::make_tuple(ships...)), currentTime(t0) {
+    SpaceBattle(S... ships) : ships(std::make_tuple(ships...)), currentTime(t0), nextAttackIndex(firstTimeIndexAtack()) {
         static_assert(t0 < t1, "Too big start time.");
         static_assert(t0 >= 0, "Start time lower than 0.");
         static_assert(t1 >= 0, "Max time lower than 0.");
@@ -31,12 +31,21 @@ public:
     
     void tick(T timeStep) {
     
+        for (T i = 0; i < timeStep; ++i) {
+            if(squares[nextAttackIndex] == currentTime) {
+                countNextTimeIndex();
+                //atack
+            }
+            currentTime++;
+        }
+        
     }
     
 private:
     std::tuple<S...> ships;
     static constexpr size_t shipsCount = sizeof...(S);
     T currentTime;
+    T nextAttackIndex;
     static constexpr T maxTime = t1;
     size_t imperialFleetCount;
     size_t rebelFleetCount;
@@ -103,8 +112,21 @@ private:
         return result;
     }
     
-    constexpr static T lenSquares = countLenSq<t1>();
-    constexpr static auto squares = genSquares<t1>();
+    constexpr static T lenSquares = countLenSq<maxTime>();
+    constexpr static auto squares = genSquares<maxTime>();
+    
+    constexpr static  T firstTimeIndexAtack() {
+        for( T i = 0; i < lenSquares ; ++i) {
+            if (squares[i] >= t0)
+                return i;
+        }
+        return 0;
+    }
+    
+    void countNextTimeIndex() {
+        nextAttackIndex = (++nextAttackIndex) % lenSquares;
+    }
+    
 };
 
 #endif //STARWARS_BATTLE_H
