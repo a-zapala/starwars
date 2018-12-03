@@ -13,7 +13,7 @@ class SpaceBattle {
 public:
     SpaceBattle(S... ships) : ships(std::make_tuple(ships...)), currentTime(t0),
                               nextAttackIndex(firstTimeIndexAtack()) {
-        static_assert(t0 < t1, "Too big start time.");
+        static_assert(t0 <= t1, "Too big start time.");
         static_assert(t0 >= 0, "Start time lower than 0.");
         static_assert(t1 >= 0, "Max time lower than 0.");
 
@@ -47,7 +47,7 @@ private:
     static constexpr size_t shipsCount = sizeof...(S);
     T currentTime;
     T nextAttackIndex;
-    static constexpr T maxTime = t1;
+    static constexpr T maxTime = t1 + 1;
     size_t imperialFleetCount;
     size_t rebelFleetCount;
 
@@ -135,12 +135,17 @@ private:
         nextAttackIndex = 0;
     }
 
+    template<typename I>
+    bool isAlive(I& ship) {
+        return ship.getShield() > 0;
+    }
+
     template<typename U, int minSpeed, int maxSpeed, bool canAttack>
     void attackSequenceImperial(RebelStarship<U, minSpeed, maxSpeed, canAttack> &) {}
 
     template<typename U>
     void attackSequenceImperial(ImperialStarship<U> &first) {
-        if (first.getShield() > 0) attackSequenceR(first, std::index_sequence_for<S...>());
+        if (isAlive(first)) attackSequenceR(first, std::index_sequence_for<S...>());
     }
 
     template<typename U, int minSpeed, int maxSpeed, bool canAttack, typename... Args>
@@ -150,7 +155,7 @@ private:
 
     template<typename U, typename... Args>
     void attackSequenceImperial(ImperialStarship<U> &first, Args &... base) {
-        if (first.getShield() > 0) {
+        if (isAlive(first)) {
             attackSequenceR(first, std::index_sequence_for<S...>());
         }
         attackSequenceImperial(base...);
@@ -162,27 +167,27 @@ private:
     template<typename I, typename U, int minSpeed, int maxSpeed, bool canAttack>
     void
     attackSequenceRebel(ImperialStarship<I> &imperialShip, RebelStarship<U, minSpeed, maxSpeed, canAttack> &first) {
-        if (imperialShip.getShield() > 0 && first.getShield() > 0) {
+        if (isAlive(imperialShip) && isAlive(first)) {
             attack(imperialShip, first);
-            if (imperialShip.getShield() == 0) imperialFleetCount--;
-            if (first.getShield() == 0) rebelFleetCount--;
+            if (!isAlive(imperialShip)) imperialFleetCount--;
+            if (!isAlive(first)) rebelFleetCount--;
         }
     }
 
     template<typename I, typename U, typename... Args>
     void attackSequenceRebel(ImperialStarship<I> &imperialShip, ImperialStarship<U> &, Args &... base) {
-        if (imperialShip.getShield() == 0) return;
+        if (!isAlive(imperialShip)) return;
         attackSequenceRebel(imperialShip, base...);
     }
 
     template<typename I, typename U, int minSpeed, int maxSpeed, bool canAttack, typename... Args>
     void attackSequenceRebel(ImperialStarship<I> &imperialShip,
                              RebelStarship<U, minSpeed, maxSpeed, canAttack> &first, Args &... base) {
-        if (imperialShip.getShield() == 0) return;
-        if (first.getShield() > 0) {
+        if (!isAlive(imperialShip)) return;
+        if (isAlive(first)) {
             attack(imperialShip, first);
-            if (imperialShip.getShield() == 0) imperialFleetCount--;
-            if (first.getShield() == 0) rebelFleetCount--;
+            if (!isAlive(imperialShip)) imperialFleetCount--;
+            if (!isAlive(first)) rebelFleetCount--;
         }
         attackSequenceRebel(imperialShip, base...);
     }
