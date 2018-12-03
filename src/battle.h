@@ -106,7 +106,7 @@ private:
     template<T limit>
     constexpr static auto genSquares() {
         ::std::array<T, lenSquares> result{};
-        for (T i = 0; i * i < limit; ++i)
+        for (T i = 0; (i == 0 && limit > 0) || i < limit / i; ++i)
             result[i] = i * i;
         return result;
     }
